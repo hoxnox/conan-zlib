@@ -1,0 +1,34 @@
+--- ../CMakeLists.txt	2017-09-28 13:03:04.136917309 +0300
++++ CMakeLists.txt	2017-09-28 13:07:57.159901101 +0300
+@@ -7,6 +7,8 @@
+ 
+ option(ASM686 "Enable building i686 assembly implementation")
+ option(AMD64 "Enable building amd64 assembly implementation")
++option(INSTALL_SHARED "install shared version of the library" ON)
++option(INSTALL_STATIC "install static version of the library" ON)
+ 
+ set(INSTALL_BIN_DIR "${CMAKE_INSTALL_PREFIX}/bin" CACHE PATH "Installation directory for executables")
+ set(INSTALL_LIB_DIR "${CMAKE_INSTALL_PREFIX}/lib" CACHE PATH "Installation directory for libraries")
+@@ -211,10 +213,18 @@
+ endif()
+ 
+ if(NOT SKIP_INSTALL_LIBRARIES AND NOT SKIP_INSTALL_ALL )
+-    install(TARGETS zlib zlibstatic
+-        RUNTIME DESTINATION "${INSTALL_BIN_DIR}"
+-        ARCHIVE DESTINATION "${INSTALL_LIB_DIR}"
+-        LIBRARY DESTINATION "${INSTALL_LIB_DIR}" )
++    if (INSTALL_SHARED)
++        install(TARGETS zlib 
++            RUNTIME DESTINATION "${INSTALL_BIN_DIR}"
++            ARCHIVE DESTINATION "${INSTALL_LIB_DIR}"
++            LIBRARY DESTINATION "${INSTALL_LIB_DIR}" )
++    endif()
++    if (INSTALL_STATIC)
++        install(TARGETS zlibstatic
++            RUNTIME DESTINATION "${INSTALL_BIN_DIR}"
++            ARCHIVE DESTINATION "${INSTALL_LIB_DIR}"
++            LIBRARY DESTINATION "${INSTALL_LIB_DIR}" )
++    endif()
+ endif()
+ if(NOT SKIP_INSTALL_HEADERS AND NOT SKIP_INSTALL_ALL )
+     install(FILES ${ZLIB_PUBLIC_HDRS} DESTINATION "${INSTALL_INC_DIR}")

@@ -1,6 +1,6 @@
 from nxtools import NxConanFile
 from conans import CMake,tools
-
+from glob import glob
 
 class ZlibConan(NxConanFile):
     name = "zlib"
@@ -23,17 +23,27 @@ class ZlibConan(NxConanFile):
 
     def do_build(self):
         cmake = CMake(self)
-        tools.untargz("zlib-{v}.tar.gz".format(v=self.version))
-        cmake.configure(defs={
+        tools.untargz("zlib-{v}.tar.gz".format(v=self.version), "{staging_dir}/src".format(staging_dir=self.staging_dir))
+        src_dir = "{staging_dir}/src/zlib-{v}".format(staging_dir=self.staging_dir, v=self.version)
+        cmake.build_dir = "{src_dir}/build".format(src_dir=src_dir)
+        for file in sorted(glob("patch/[0-9]*.patch")):
+            self.output.info("Applying patch '{file}'".format(file=file))
+            tools.patch(base_path=src_dir, patch_file=file, strip=0)
+
+        cmake_defs = {
                 "CMAKE_INSTALL_PREFIX": self.staging_dir,
                 "CMAKE_INSTALL_LIBDIR": "lib",
+                "INSTALL_STATIC" if self.options.shared else "INSTALL_SHARED" : "OFF",
                 "BUILD_SHARED_LIBS": "1" if self.options.shared else "0"
-            }, source_dir="zlib-{v}".format(v=self.version))
+                }
+        cmake.verbose = True
+        cmake_defs.update(self.cmake_crt_linking_flags())
+        cmake.configure(defs=cmake_defs, source_dir=src_dir)
         cmake.build(target="install")
 
     def do_package_info(self):
         if self.settings.compiler == "Visual Studio":
             self.cpp_info.libs = ["zlib"] if self.options.shared else ["zlibstatic"]
         else:
-            self.cpp_info.libs = ["z"] if self.options.shared else ["z.a"]
+            self.cpp_info.libs = ["z"]
 
